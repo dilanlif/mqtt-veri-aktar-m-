@@ -1,0 +1,62 @@
+#include <WiFi.h>
+#include <PubSubClient.h>
+
+const char* ssid = "Mese";
+const char* password = "Mese130317";
+
+const char* mqttServer = "test.mosquitto.org";
+const int mqttPort = 1883;
+const char* mqttTopic = "testtopic";
+
+WiFiClient espClient;
+PubSubClient client(espClient);
+
+void setupWiFi() {
+  Serial.print("Wi-Fi'ye bağlanıyor");
+  WiFi.begin(ssid, password);
+
+  int attempts = 0;
+  while (WiFi.status() != WL_CONNECTED && attempts < 20) { 
+    delay(500);
+    Serial.print(".");
+    attempts++;
+  }
+
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.println("Bağlandı!");
+    Serial.print("IP Adresi: ");
+    Serial.println(WiFi.localIP());
+  } else {
+    Serial.println("Wi-Fi bağlantısı başarısız.");
+  }
+}
+
+void reconnect() {
+  while (!client.connected()) {
+    Serial.print("MQTT'ye bağlanıyor...");
+    
+    if (client.connect("kjkhu9798798798")) {
+      Serial.println("Bağlandı!");
+      client.publish(mqttTopic, "Merhaba MQTT!"); 
+    } else {
+      Serial.print("Bağlanamadı, hata kodu: ");
+      Serial.print(client.state());
+      Serial.println(" yeniden deneyeceğim...");
+      delay(5000);
+    }
+  }
+}
+
+void setup() {
+  Serial.begin(115200);
+  setupWiFi();
+  client.setServer(mqttServer, mqttPort);
+}
+
+void loop() {
+  if (!client.connected()) {
+    reconnect();
+  }
+  client.loop();
+}
+
